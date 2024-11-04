@@ -22,7 +22,7 @@ CMD /usr/bin/xvfb-run --server-args="-screen 0 1920x1080x24 -ac" & \
  && sleep 1 && \
     openbox & \
     x11vnc -display :1 -usepw -forever -background -display :1 -N -o /var/log/x11vnc.log & \
-    chromium --no-sandbox --disable-gpu --disable-software-rasterizer --remote-debugging-port=9222 "https://play.geforcenow.com" 
+    chromium --no-sandbox --disable-gpu --disable-software-rasterizer --remote-debugging-port=9222 "https://play.geforcenow.com/mall" 
 
 # Expose the VNC port
 EXPOSE 5900
