@@ -1,28 +1,40 @@
-# Use the latest Alpine base image
-FROM alpine:latest
+# Use a lightweight base image
+FROM debian:bullseye-slim
 
-# Install necessary packages
-RUN apk add --no-cache \
-    openbox \
-    x11vnc \
+# Set environment variables
+ENV DEBIAN_FRONTEND=noninteractive
+ENV DISPLAY=:99
+
+# Install necessary packages, including x11vnc
+RUN apt-get update && apt-get install -y \
     xvfb \
-    chromium \
-    bash \
-    bash-completion \
-    ttf-freefont \
-    && mkdir -p /root/.vnc \
-    && x11vnc -storepasswd 123456 /root/.vnc/passwd
+    websockify \
+    git \
+    libpci-dev \
+    libegl-dev \
+    firefox-esr \
+    x11vnc \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Setup the environment
-ENV USER=root
-ENV DISPLAY=:1
+# Download noVNC
+RUN git clone https://github.com/novnc/noVNC.git /noVNC && \
+    git clone https://github.com/novnc/websockify.git /noVNC/utils/websockify
 
-# Start VNC server and Openbox on entry
-CMD /usr/bin/xvfb-run --server-args="-screen 0 1920x1080x24 -ac" & \
- && sleep 1 && \
-    openbox & \
-    x11vnc -display :1 -usepw -forever -background -display :1 -N -o /var/log/x11vnc.log & \
-    chromium --no-sandbox --disable-gpu --disable-software-rasterizer --remote-debugging-port=9222 "https://play.geforcenow.com/mall" 
+# Create the startup script
+RUN echo '#!/bin/bash' > /start.sh && \
+    echo 'Xvfb :99 -screen 0 1280x720x24 & ' >> /start.sh && \
+    echo 'export DISPLAY=:99' >> /start.sh && \
+    echo 'firefox-esr --no-remote --new-instance https://play.geforcenow.com/mall & ' >> /start.sh && \
+    echo 'sleep 5' >> /start.sh && \
+    echo 'x11vnc -display :99 -nopw -forever & ' >> /start.sh && \
+    echo 'websockify --web=/noVNC/ 6080 localhost:5900 & ' >> /start.sh && \
+    echo 'while true; do sleep 2; done' >> /start.sh 
 
-# Expose the VNC port
-EXPOSE 5900
+# Make the startup script executable
+RUN chmod +x /start.sh
+
+# Expose the ports
+EXPOSE 6080
+
+# Start the application
+CMD ["/start.sh"]
