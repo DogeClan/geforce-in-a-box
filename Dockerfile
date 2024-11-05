@@ -1,12 +1,12 @@
-# Use the latest Debian base image
-FROM debian:latest
+# Use a smaller Debian base image
+FROM debian:slim
 
 # Set environment variables to avoid interactive prompts during package installations
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Update package lists and install required packages
+# Update packages and install essential dependencies
 RUN apt-get update && \
-    apt-get install -y \
+    apt-get install -y --no-install-recommends \
     git \
     python3 \
     python3-pip \
@@ -37,17 +37,15 @@ RUN apt-get update && \
     libx264-dev \
     libvpx-dev \
     xvfb \
-    wget \
-    && apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+    wget && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Add the Xpra GPG key and repository
 RUN wget -O "/usr/share/keyrings/xpra.asc" https://xpra.org/xpra.asc && \
     echo "deb [signed-by=/usr/share/keyrings/xpra.asc] https://xpra.org/debian bullseye main" | tee /etc/apt/sources.list.d/xpra.list && \
     apt-get update && \
-    apt-get install -y xpra && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+    apt-get install -y --no-install-recommends xpra && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Create a virtual environment for Python
 RUN python3 -m venv /opt/venv
